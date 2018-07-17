@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        img
+        {
+            width:100%;
+            height:100%;
+            position:relative;
+        }
+
+        ._shape_face.show
+        {
+            width:22px!important;
+            height:22px!important;
+            opacity:1;
+        }
+
+        .maps_edit
+        {
+            padding-bottom:50px;
+        }
+
+        .maps_edit, .maps_view
+        {
+            width:270px;
+            max-width:100%;
+            max-height:100%;
+            position:relative;
+            margin:0 auto;
+        }
+
+        .maps_view
+        {
+            width:300px;
+        }
+    </style>
+</head>
+
+<body>
+<!-- 報修回報按鈕 -->
+<a href="#" id="btnFixSystem" class="btn"> 報修回報 </a>
+
+<!-- 匯入圖片資源 -->
+<div id="wrap">
+    <div class="img_shape" style="display:none;">
+        <input type="radio" id="image_1" class="img_input" name="img_input" data-image="up.png">
+        <label for="image_1"> <img src="up.png"> </label>
+        <input type="radio" id="image_2" class="img_input" name="img_input" data-image="right.png">
+        <label for="image_2"> <img src="right.png"> </label>
+        <input type="radio" id="image_3" class="img_input" name="img_input" data-image="down.png">
+        <label for="image_3"> <img src="down.png"> </label>
+        <input type="radio" id="image_4" class="img_input" name="img_input" data-image="left.png">
+        <label for="image_4"> <img src="left.png"> </label>
+        <input type="radio" id="image_5" class="img_input" name="img_input" data-image="now.png">
+        <label for="image_5"> <img src="now.png"> </label>
+        <input type="radio" id="image_6" class="img_input" name="img_input" data-image="end.png">
+        <label for="image_6"> <img src="end.png"> </label>
+
+        <a href="#" id="draw" class="btn"> add shape </a>
+    </div>
+
+    <div class="img_shape_remove" style="display:none;">
+        <a href="#" id="remove" class="btn"> remove shape </a>
+    </div>
+
+    <div class="maps_edit" style="visibility:hidden; position:absolute;">
+        <img src="EE01.png" class="img_maps_edit">
+    </div>
+
+    <div class="maps_view">
+        <a href="#" id="view" class="btn"></a>
+        <img src="EE01.png" class="img_maps_view">
+    </div>
+</div>
+
+<!-- 報修回報填寫表單 -->
+<div id="formFixSystem" class="modal" aria-hidden="true" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content animated flipInY">
+            <!-- 填寫表單(header) -->
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true"> × </span>
+                </button>
+                <h4 class="modal-title"> 報修回報詳細內容 </h4>
+            </div>
+
+            <!-- 填寫表單(body) -->
+            <div class="modal-body text-center">
+                <div class="m-b-md">
+                    <span> 描述： </span>
+                    <input id="fixComment" style="width:100px;"> </input> <br>
+
+                    <span> 地點： </span>
+                    <select id="fixChoosePosi" style="width:100px;">
+                        <option value="1"> 牆壁 </option>
+                        <option value="2"> 天花板 </option>
+                        <option value="3"> 地板 </option>
+                        <option value="4"> 其他 </option>
+                    </select> <br>
+
+                    <span> 您所在地： </span>
+                    <span id="fixPredictPosi"> </span>
+                </div>
+
+                <button id="btnQRCodeScan"> 掃描條碼 </button>
+                <button id="btnCamera"> 拍照上傳 </button>
+                <!-- <input type="file" accept="image/" capture="camera" id="cameraInput" name="cameraInput"> -->
+
+                <button type="button" class="close" data-dismiss="modal"> 取消 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 匯入函式 -->
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet" type="text/css">
+<link href="bootstrap.min.css" rel="stylesheet">
+<link href="sweetalert.css" rel="stylesheet">
+<script src="graph.js"></script> <!-- dijkstra -->
+<script src="jquery-2.2.4.min.js"></script>
+<script src="jquery.imageMaps.js"></script>
+<script src="bootstrap.min.js"></script>
+<script src="sweetalert.min.js"></script>
+<script src="notify.js"></script>
+<script src="allPositionTable.js"></script>
+<script src="allDirectionTable.js"></script>
+
+<!-- 自定義函式 -->
+<script>
+    var obs = 999;
+    var map = {
+        a1:{a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        a2:{a1:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        a3:{a1:[obs],a2:[obs],a4:[1,"down"],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[1,"right"],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        a4:{a1:[obs],a2:[obs],a3:[1,"up"],a5:[1,"down"],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        a5:{a1:[obs],a2:[obs],a3:[obs],a4:[1,"up"],a6:[1,"down"],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        a6:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[1,"up"],a7:[1,"down"],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        a7:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[1,"up"],a8:[1,"down"],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        a8:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[1,"up"],a9:[1,"down"],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        a9:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[1,"up"],a10:[1,"down"],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        a10:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[1,"up"],a11:[1,"down"],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        a11:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[1,"up"],a12:[1,"down"],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        a12:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[1,"up"],a13:[1,"down"],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        a13:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[1,"up"],a14:[1,"down"],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[1,"right"],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        a14:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[1,"up"],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[1,"right"],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b1:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b2:[1,"down"],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[1,"right"],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b2:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[1,"up"],b3:[1,"down"],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[1,"right"],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b3:{a1:[obs],a2:[obs],a3:[1,"left"],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[1,"up"],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[1,"right"],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b4:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b5:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b6:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b7:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b8:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b9:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b10:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b11:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b12:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b13:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[1,"left"],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b14:[1,"down"],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[1,"right"],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        b14:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[1,"left"],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[1,"up"],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[1,"right"],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c1:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[1,"left"],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c2:[1,"down"],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[1,"right"],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c2:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[1,"left"],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[1,"up"],c3:[1,"down"],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[1,"right"],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c3:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[1,"left"],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[1,"up"],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[1,"right"],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c4:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c5:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c6:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c7:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c8:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c9:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c10:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c11:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c12:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c13:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[1,"left"],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c14:[1,"down"],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        c14:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[1,"left"],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[1,"up"],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        d1:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[1,"left"],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d2:[1,"down"],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        d2:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[1,"left"],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[1,"up"],d3:[1,"down"],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        d3:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[1,"left"],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[1,"up"],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        d4:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        d5:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        d6:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        d7:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        d8:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        d9:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        d10:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d11:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        d11:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d12:[obs],d13:[obs],d14:[obs]},
+        d12:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d13:[obs],d14:[obs]},
+        d13:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d14:[obs]},
+        d14:{a1:[obs],a2:[obs],a3:[obs],a4:[obs],a5:[obs],a6:[obs],a7:[obs],a8:[obs],a9:[obs],a10:[obs],a11:[obs],a12:[obs],a13:[obs],a14:[obs],b1:[obs],b2:[obs],b3:[obs],b4:[obs],b5:[obs],b6:[obs],b7:[obs],b8:[obs],b9:[obs],b10:[obs],b11:[obs],b12:[obs],b13:[obs],b14:[obs],c1:[obs],c2:[obs],c3:[obs],c4:[obs],c5:[obs],c6:[obs],c7:[obs],c8:[obs],c9:[obs],c10:[obs],c11:[obs],c12:[obs],c13:[obs],c14:[obs],d1:[obs],d2:[obs],d3:[obs],d4:[obs],d5:[obs],d6:[obs],d7:[obs],d8:[obs],d9:[obs],d10:[obs],d11:[obs],d12:[obs],d13:[obs]}
+    };
+
+    var graph = new Graph(map);
+    var imageMapsEdit = $('.img_maps_edit').imageMaps();
+    var imageMapsView = $('.img_maps_view').imageMaps();
+
+    $.indoorImage = 0;
+    $.go_x;
+    $.go_y;
+    $.showInfoArr = [];
+
+    // TODO 方法：切換室內定位背景地圖
+    function showIndoorImage(ArrIndex)
+    {
+        if(ArrIndex !== $.indoorImage)
+        {
+            var src;
+
+            switch(ArrIndex)
+            {
+                case 0: { src = "EE01.png"; break; }
+                case 1: { src = "IB01.png"; break; }
+                case 2: { src = "IB11.png"; break; }
+            }
+
+            $(".img_maps_edit, .img_maps_view").attr("src", src);
+            $.indoorImage = ArrIndex;
+        }
+    }
+
+    // TODO 方法：顯示定位座標(除錯使用)
+    function testPosition(posiX, posiY)
+    {
+        $("#remove").trigger('click');
+        $("#image_5").click();
+
+        $.go_x = posiX;
+        $.go_y = posiY;
+
+        $('#draw').trigger('click', [[$.go_x, $.go_y, $.go_x + 40, $.go_y + 40]]); // draw map
+        $("#view").trigger('click'); // view map
+    }
+
+    // TODO 方法：顯示定位座標
+    function showPosition(posi)
+    {
+        $("#remove").trigger('click');
+        $("#image_5").click();
+
+        switch($.indoorImage)
+        {
+            case 0: { EE01Position(posi); break; }
+            case 1: { IB01Position(posi); break; }
+            case 2: { IB11Position(posi); break; }
+        }
+
+        $('#draw').trigger('click', [[$.go_x, $.go_y, $.go_x + 40, $.go_y + 40]]); // draw map
+        $("#view").trigger('click'); // view map
+    }
+
+    // TODO 方法：顯示導航路線與推播
+    function showDirection(from, to)
+    {
+        to = "a14"; // "EE1F電梯";
+
+        $.nowArrowDirection = "init";
+        $.lastArrowDirection = "init";
+
+        if($.inArray(from, $.showInfoArr) == -1)
+        {
+            $.showInfoArr[$.showInfoArr.length] = from;
+            showInfoToUser(from);
+        }
+
+        switch($.indoorImage)
+        {
+            case 0: { from = EE01Direction(from); break; }
+            case 1: { from = IB01Direction(from); break; }
+            case 2: { from = IB11Direction(from); break; }
+        }
+
+        var direct = graph.findShortestPath(from, to);
+        var from_e = from.slice(0, 1);
+        var from_n = from.slice(1, from.length);
+
+        $.go_x = 275 + (from_e.charCodeAt(0)-96)*(-65);
+        $.go_y = (730+670/13) + parseInt(from_n)*(-670/13); // init coords x 0-228 y 0-530 14*63
+
+        $("#remove").trigger("click");
+        $("#image_5").click();
+
+        $.each(direct, function(k, v)
+        {
+            if(k === 0) { return true; }
+
+            switch($.nowArrowDirection)
+            {
+                case "up":    { $("#image_1").click(); break; }
+                case "right": { $("#image_2").click(); break; }
+                case "down":  { $("#image_3").click(); break; }
+                case "left":  { $("#image_4").click(); break; }
+            }
+
+            $('#draw').trigger('click', [[$.go_x, $.go_y, $.go_x + 40, $.go_y + 40]]); // draw map
+
+            switch(v[1])
+            {
+                case "up":    { go("down");  $.nowArrowDirection = "down";  break; }
+                case "right": { go("left");  $.nowArrowDirection = "left";  break; }
+                case "down":  { go("up");    $.nowArrowDirection = "up";    break; }
+                case "left":  { go("right"); $.nowArrowDirection = "right"; break; }
+            }
+
+            $.lastArrowDirection = $.nowArrowDirection;
+
+            if(k === direct.length - 1)
+            {
+                $("#image_6").click();
+
+                $('#draw').trigger('click', [[$.go_x, $.go_y, $.go_x + 40, $.go_y + 40]]); // draw map
+                $("#view").trigger('click'); // view map
+
+                return false;
+            }
+        });
+    }
+
+    // TODO 方法：計算導航路線
+    function go(direction)
+    {
+        switch(direction)
+        {
+            case "up":    { $.go_y -= 670/13; break; } // one grid
+            case "right": { $.go_x += 65;     break; } // one grid
+            case "down":  { $.go_y += 670/13; break; } // one grid
+            case "left":  { $.go_x -= 65;     break; } // one grid
+        }
+    }
+
+    // TODO 方法：相機服務(活動處理器回應)
+    function CameraCallBack()
+    {
+        showRemind("資料上傳成功", "success");
+        $("#formFixSystem").modal("hide");
+    }
+
+    // TODO 方法：快速響應矩陣圖碼服務(活動處理器回應)
+    function QRCodeScanCallBack(scan_data)
+    {
+        //scan_data = scan_data.toString();
+        if(scan_data.length === 16)
+        {
+            showRemind("掃描資料成功", "success");
+
+            var building = scan_data.substr(0, 2);
+            var floors   = scan_data.substr(2, 2);
+            var rooms    = scan_data.substr(4, 2);
+            var thing    = scan_data.substr(6, 6);
+            var problem  = scan_data.substr(12, 4);
+
+            $.ajax(
+            {
+                type: "POST",
+                url: "http://www.oort.com.tw/bohan/test/fixSystem/php/qrcodeReader.php",
+                async: true,
+
+                data:
+                {
+                    building: building,
+                    floors:   floors,
+                    rooms:    rooms,
+                    thing:    thing,
+                    problem:  problem,
+                    Comment:  $("#fixComment").val()
+                },
+
+                success: function(data)
+                {
+                    data = JSON.parse(data);
+
+                    if(data.success)
+                    { showRemind("資料上傳成功", "success"); }
+
+                    else
+                    { showRemind(data.msg, "error"); }
+                },
+
+                error: function(data)
+                {
+                    showRemind("資料上傳失敗", "error");
+                }
+            });
+        }
+
+        else { showRemind("掃描資料解析錯誤" + scan_data, "error"); }
+        
+        $("#formFixSystem").modal("hide");
+    }
+
+    // TODO 方法：顯示提示訊息
+    function showRemind(msg, state)
+    {
+        $.notify(msg, {className:state, position:"middle center"}); // bottom center
+    }
+
+    // TODO 按鈕事件：報修回報(由使用者觸發)
+    $("#btnFixSystem").bind("click", function()
+    {
+        var fixPredictPosi = $.fixPredictPosi ? $.fixPredictPosi : "Unknown";
+
+        $("#fixPredictPosi").html(fixPredictPosi);
+        $("#formFixSystem").modal("show");
+    });
+
+    // TODO 按鈕事件：相機服務(觸發網頁應用介面)(由使用者觸發)
+    $("#btnCamera").bind("click", function()
+    {
+        var fixPredictPosi = $.fixPredictPosi.replace(/ /g, "%20");
+        javaScriptCallToSwift.openCamera($("#fixComment").val(), $("#fixChoosePosi").val(), fixPredictPosi);
+    });
+
+    // TODO 按鈕事件：快速響應矩陣圖碼服務(觸發網頁應用介面)(由使用者觸發)
+    $("#btnQRCodeScan").bind("click", function()
+    {
+        javaScriptCallToSwift.ScanQRCode();
+    });
+
+    // TODO 按鈕事件：移除圖形(由程式碼觸發)
+    $('#remove').bind('click', function(event)
+    {
+        event.preventDefault();
+        $('.img_maps_edit').removeAllShapes();
+    });
+
+    // TODO 按鈕事件：繪製圖形(由程式碼觸發)
+    $('#draw').bind('click', function(event, coords)
+    {
+        event.preventDefault();
+        coords = coords || [0, 0, 50, 50];
+        $('.img_maps_edit').setImageShape($('input.img_input:checked').data('image')).addShape(coords, $('#link').val(), 'image');
+    });
+
+    // TODO 按鈕事件：顯示圖形(由程式碼觸發)
+    $('#view').bind('click', function(event)
+    {
+        
+
+        var allShapes = $('.img_maps_edit').getAllShapes();
+        var newCoords = null;
+
+		event.preventDefault();
+        imageMapsView.removeAllShapes();
+
+        $.each(allShapes, function(index, item)
+        {
+            imageMapsView.setShapeStyle(item.style);
+
+            if(item.href) { imageMapsView.setImageShape(item.href); }
+            if(item.text) { imageMapsView.setTextShape(item.text); }
+
+            var editImg = $('.maps_edit').find('img');
+            var viewImg = $('.maps_view').find('img');
+
+            var widthRatio = editImg.width();
+            var heightRatio = editImg.height();
+
+            newCoords = imageMapsView.getCoordsByRatio(item.coords, item.type, viewImg.width() / widthRatio, viewImg.height() / heightRatio);
+
+            imageMapsView.addShape(newCoords, item.url, item.type);
+        });
+
+        $('.maps_view ._shape_face').addClass('show');
+    });
+</script>
+
+</body>
+</html>
